@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SmartEnergyMine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+   
+body {
+    color: white;
+  background-image: url('image/img.jpg'); /* path to your image */
+  background-size: cover; /* makes the image cover the entire area */
+  background-repeat: no-repeat; /* prevents tiling */
+  background-position: center; /* centers the image */
+}
+
+    .glass {
+  background: rgba(400, 270, 255, 0.24); /* more opaque so text is readable */
+  backdrop-filter: blur(6px);            /* keeps the blur effect */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* slightly stronger border */
+  color: white;                          /* ensures text inside is white */
+}
+
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="md:col-span-2 glass p-8 rounded-2xl shadow-xl">
+      <div class="flex gap-4 mb-6">
+        <div class="w-1/2 glass p-4 rounded-lg flex items-center justify-center">
+          <img src="./assets/mining.svg" alt="Mining" class="max-h-40"/>
+        </div>
+        <div class="w-1/2 glass p-4 rounded-lg flex items-center justify-center">
+          <img src="./assets/iron.svg" alt="Iron Ore" class="max-h-40"/>
+        </div>
+      </div>
+
+      <header class="flex items-center justify-between">
+        <h1 class="text-3xl font-semibold">Smart<span class="text-indigo-400">Energy</span>Mine</h1>
+        <nav class="space-x-4 text-sm">
+          <a href="#" class="hover:underline">Home</a>
+          <a href="#" class="hover:underline">Features</a>
+          <a href="#" class="hover:underline">Demo</a>
+        </nav>
+      </header>
+
+      <section class="mt-6">
+        <h2 class="text-xl font-medium">AI + IoT — Energy Optimization for Mining</h2>
+        <p class="mt-3 text-slate-300">Reduce energy use, cut costs, and improve equipment uptime with real-time monitoring and AI-driven recommendations.</p>
+
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 glass rounded-lg">
+            <div class="text-xs uppercase">Energy Reduction</div>
+            <div class="text-2xl font-bold">30%</div>
+            <div class="text-sm text-slate-300">Estimated</div>
+          </div>
+          <div class="p-4 glass rounded-lg">
+            <div class="text-xs uppercase">Cost Savings</div>
+            <div class="text-2xl font-bold">₹2.5M+</div>
+            <div class="text-sm text-slate-300">Yearly</div>
+          </div>
+          <div class="p-4 glass rounded-lg">
+            <div class="text-xs uppercase">Carbon Reduction</div>
+            <div class="text-2xl font-bold">25%</div>
+            <div class="text-sm text-slate-300">Estimated</div>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <button id="demoBtn" class="px-5 py-3 bg-indigo-500 rounded-lg hover:bg-indigo-600">Open Demo Dashboard</button>
+          <button id="apiTest" class="ml-3 px-4 py-3 border rounded-lg">Test API</button>
+        </div>
+
+        <div id="apiResult" class="mt-6 text-sm text-slate-300"></div>
+      </section>
+    </div>
+
+    <aside class="glass p-6 rounded-2xl">
+      <h3 class="text-lg font-medium">Live Snapshot</h3>
+      <div id="snapshot" class="mt-4 space-y-3">
+        <div class="p-3 glass rounded-lg">
+          <div class="text-xs">Primary Crusher — Load</div>
+          <div class="text-2xl font-bold" id="pc-load">--%</div>
+        </div>
+        <div class="p-3 glass rounded-lg">
+          <div class="text-xs">Ball Mill 1 — Energy</div>
+          <div class="text-2xl font-bold" id="bm-energy">-- kWh</div>
+        </div>
+        <div class="p-3 glass rounded-lg">
+          <div class="text-xs">Temperature</div>
+          <div class="text-2xl font-bold" id="temp">-- °C</div>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <label class="block text-xs">API Base URL</label>
+        <input id="apiBase" type="text" value="http://localhost:8000" class="mt-2 w-full p-2 rounded bg-transparent border border-white/10 text-sm" />
+        <button id="saveApi" class="mt-3 w-full px-4 py-2 bg-emerald-500 rounded">Save & Test</button>
+      </div>
+    </aside>
+  </div>
+
+<script>
+const apiResult = document.getElementById('apiResult');
+const pcLoad = document.getElementById('pc-load');
+const bmEnergy = document.getElementById('bm-energy');
+const tempEl = document.getElementById('temp');
+
+function testApi(base){
+  apiResult.textContent = 'Testing...';
+  // Try fetching /api/health or /health, fallback to root
+  const candidates = [base + '/api/health', base + '/health', base];
+  let tried = 0;
+  function tryNext(){
+    if(tried >= candidates.length){ apiResult.textContent = 'Unable to reach backend. Check URL and CORS.'; return; }
+    fetch(candidates[tried]).then(r => r.json()).then(j => {
+      apiResult.textContent = 'Connected — response: ' + (j.status || JSON.stringify(j));
+      // if sample telemetry present, update snapshot
+      if(j.data && j.data.pc_load) pcLoad.textContent = j.data.pc_load + '%';
+      if(j.data && j.data.bm_energy) bmEnergy.textContent = j.data.bm_energy + ' kWh';
+      if(j.data && j.data.temp) tempEl.textContent = j.data.temp + ' °C';
+    }).catch(e => { tried++; tryNext(); });
+  }
+  tryNext();
+}
+
+document.getElementById('apiTest').addEventListener('click', () => {
+  const base = document.getElementById('apiBase').value || 'http://localhost:8000';
+  testApi(base);
+});
+
+document.getElementById('saveApi').addEventListener('click', () => {
+  const base = document.getElementById('apiBase').value || 'http://localhost:8000';
+  localStorage.setItem('sm_api_base', base);
+  testApi(base);
+});
+
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('sm_api_base');
+  if(saved) document.getElementById('apiBase').value = saved;
+});
+</script>
+</body>
+</html>
