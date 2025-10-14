@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles  # <- add this
 from app.routes import data_routes, predict_routes, optimize_routes
 from app.database import connect_db
 from app.models.energy_model import load_energy_model, MODEL_PATH
@@ -33,14 +34,17 @@ try:
 except Exception as e:
     print("⚠️ Warning: model load/train failed:", e)
 
-# ✅ Include routes
+# ✅ Include API routes
 app.include_router(data_routes.router, prefix="/api/data", tags=["Data"])
 app.include_router(predict_routes.router, prefix="/api/energy", tags=["Energy Prediction"])
 app.include_router(optimize_routes.router, prefix="/api/optimize", tags=["Optimization"])
 
-# ✅ Default routes
-@app.get("/")
-def home():
+# ✅ Serve frontend (replace 'frontend' with your actual folder name)
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+
+# ✅ Optional: keep a simple backend-only home route
+@app.get("/api/info")
+def info():
     return {"message": "SmartEnergyMine backend is running 🚀"}
 
 @app.get("/api/health")
